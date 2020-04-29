@@ -11,6 +11,10 @@ a07f08c9c651        datastaxlabs/dse-cdc-server:6.8.0-20190925   "/entrypoint.sh
 
 $ docker exec -it a07f08c9c651 cqlsh 
 ```
+The Docker image had resource issues with bulk workloads so switched to Linux VM testing.
+```
+<stdin>:1:Failed to import 20 rows: OverloadedErrorMessage - Request dropped due to backpressure overload: timeout exceeded.,  will retry later, attempt 1 of 5
+```
 
 
 ## DSE Install Centos 7 (for exercise)
