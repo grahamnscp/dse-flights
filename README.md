@@ -1,2 +1,422 @@
-# dse-flights
-Datastax DSE installs and tests
+# Datastax Flights Exercise
+
+## DSE Install Docker (kick-tyres test)
+```
+$ docker run -d -p 9042:9042 --env DS_LICENSE=accept datastaxlabs/dse-cdc-server:6.8.0-20190925
+a07f08c9c65187b7ae14b2f9d21104ddabcd84b092b9c757cda730c547fbfe5e
+
+$ docker ps
+CONTAINER ID        IMAGE                                        COMMAND                  CREATED             STATUS              PORTS                                                                                                                                                                                                     NAMES
+a07f08c9c651        datastaxlabs/dse-cdc-server:6.8.0-20190925   "/entrypoint.sh dse …"   6 minutes ago       Up 6 minutes        4004/tcp, 4040/tcp, 5598-5599/tcp, 7000-7001/tcp, 7077/tcp, 7080-7081/tcp, 7199/tcp, 8090/tcp, 8182/tcp, 8609/tcp, 8983-8984/tcp, 9103/tcp, 9160/tcp, 9999-10000/tcp, 18080/tcp, 0.0.0.0:9042->9042/tcp   boring_bassi
+
+$ docker exec -it a07f08c9c651 cqlsh 
+```
+
+
+## DSE Install Centos 7 (for exercise)
+```
+# cat /etc/redhat-release
+CentOS Linux release 7.8.2003 (Core)
+
+## Doc ref: https://docs.datastax.com/en/install/6.8/install/installRHELdse.html
+
+# yum install java-1.8.0-openjdk
+
+# java -version
+openjdk version "1.8.0_242"
+OpenJDK Runtime Environment (build 1.8.0_242-b08)
+OpenJDK 64-Bit Server VM (build 25.242-b08, mixed mode)
+
+# python --version
+Python 2.7.5
+
+# rpm -qa | grep libaio
+libaio-0.3.109-13.el7.x86_64
+
+cat <<EOF>> /etc/yum.repos.d/datastax.repo
+[datastax] 
+name=DataStax Repo for DataStax Enterprise
+baseurl=https://rpm.datastax.com/enterprise/
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.datastax.com/rpm/repo_key
+EOF
+
+# yum repolist
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: repo.uk.bigstepcloud.com
+ * extras: mirrors.clouvider.net
+ * updates: mirrors.clouvider.net
+datastax                      | 2.5 kB  00:00:00
+datastax/primary_db           | 656 kB  00:00:01
+repo id                       repo name                                                                                           status
+base/7/x86_64                 CentOS-7 - Base                          10,070
+datastax                      DataStax Repo for DataStax Enterprise    1,468
+extras/7/x86_64               CentOS-7 - Extras                        392
+updates/7/x86_64              CentOS-7 - Updates                       159
+repolist: 12,089
+
+# yum makecache fast
+
+# yum list dse*
+Available Packages
+dse.noarch                            6.8.0-1                datastax
+dse-demos.noarch                      6.8.0-1                datastax
+dse-full.noarch                       6.8.0-1                datastax
+dse-libcassandra.noarch               6.8.0-1                datastax
+dse-libgraph.noarch                   6.8.0-1                datastax
+dse-libhadoop.noarch                  5.0.15-1               datastax
+dse-libhadoop-native.i386             5.0.15-1               datastax
+dse-libhadoop-native.x86_64           5.0.15-1               datastax
+dse-libhadoop2-client.noarch          6.8.0-1                datastax
+dse-libhive.noarch                    5.0.15-1               datastax
+dse-liblog4j.noarch                   6.8.0-1                datastax
+dse-libmahout.noarch                  5.0.15-1               datastax
+dse-libpig.noarch                     5.0.15-1               datastax
+dse-libsolr.noarch                    6.8.0-1                datastax
+dse-libspark.noarch                   6.8.0-1                datastax
+dse-libsqoop.noarch                   5.0.15-1               datastax
+dse-libtomcat.noarch                  6.8.0-1                datastax
+
+# yum install dse-full
+==========================================================================================================
+ Package                                Arch              Version             Repository            Size
+==========================================================================================================
+Installing:
+ dse-full                               noarch            6.8.0-1             datastax              132 k
+Installing for dependencies:
+ dse                                    noarch            6.8.0-1             datastax              235 M
+ dse-libcassandra                       noarch            6.8.0-1             datastax              79 M
+ dse-libgraph                           noarch            6.8.0-1             datastax              249 M
+ dse-libhadoop2-client                  noarch            6.8.0-1             datastax              71 M
+ dse-liblog4j                           noarch            6.8.0-1             datastax              14 k
+ dse-libsolr                            noarch            6.8.0-1             datastax              69 M
+ dse-libspark                           noarch            6.8.0-1             datastax              436 M
+ dse-libtomcat                          noarch            6.8.0-1             datastax              5.1 M
+
+Transaction Summary
+==========================================================================================================
+Install  1 Package (+8 Dependent packages)
+
+Total download size: 1.1 G
+Installed size: 1.3 G
+Downloading packages:
+warning: /var/cache/yum/x86_64/7/datastax/packages/dse-full-6.8.0-1.noarch.rpm: Header V3 RSA/SHA256 Signature, key ID 10782bd9: NOKEY                ]  0.0 B/s | 122 kB  --:--:-- ETA
+Public key for dse-full-6.8.0-1.noarch.rpm is not installed
+(1/9): dse-full-6.8.0-1.noarch.rpm                    | 132 kB  00:00:01
+(2/9): dse-libcassandra-6.8.0-1.noarch.rpm            |  79 MB  00:00:19
+(3/9): dse-libgraph-6.8.0-1.noarch.rpm                | 249 MB  00:00:43
+(4/9): dse-libhadoop2-client-6.8.0-1.noarch.rpm       |  71 MB  00:00:14
+(5/9): dse-liblog4j-6.8.0-1.noarch.rpm                |  14 kB  00:00:00
+(6/9): dse-libsolr-6.8.0-1.noarch.rpm                 |  69 MB  00:00:12
+(7/9): dse-libspark-6.8.0-1.noarch.rpm                | 436 MB  00:01:09
+(8/9): dse-libtomcat-6.8.0-1.noarch.rpm               | 5.1 MB  00:00:01
+(9/9): dse-6.8.0-1.noarch.rpm                         | 235 MB  00:03:18
+--------------------------------------------------------------------------
+Total                                        5.8 MB/s | 1.1 GB  00:03:18
+Retrieving key from https://rpm.datastax.com/rpm/repo_key
+Importing GPG key 0x10782BD9:
+ Userid     : "DataStax Engineering (2018) <dseng@datastax.com>"
+ Fingerprint: 0f6b a21e fd0e 773a 61c1 87f8 0ff0 d860 1078 2bd9
+ From       : https://rpm.datastax.com/rpm/repo_key
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : dse-libhadoop2-client-6.8.0-1.noarch     1/9
+  Installing : dse-libcassandra-6.8.0-1.noarch          2/9
+  Installing : dse-6.8.0-1.noarch                       3/9
+  Installing : dse-libspark-6.8.0-1.noarch              4/9
+  Installing : dse-libtomcat-6.8.0-1.noarch             5/9
+  Installing : dse-libsolr-6.8.0-1.noarch               6/9
+  Installing : dse-libgraph-6.8.0-1.noarch              7/9
+  Installing : dse-liblog4j-6.8.0-1.noarch              8/9
+  Installing : dse-full-6.8.0-1.noarch                  9/9
+  Verifying  : dse-libspark-6.8.0-1.noarch              1/9
+  Verifying  : dse-libtomcat-6.8.0-1.noarch             2/9
+  Verifying  : dse-libcassandra-6.8.0-1.noarch          3/9
+  Verifying  : dse-libsolr-6.8.0-1.noarch               4/9
+  Verifying  : dse-libgraph-6.8.0-1.noarch              5/9
+  Verifying  : dse-full-6.8.0-1.noarch                  6/9
+  Verifying  : dse-6.8.0-1.noarch                       7/9
+  Verifying  : dse-liblog4j-6.8.0-1.noarch              8/9
+  Verifying  : dse-libhadoop2-client-6.8.0-1.noarch     9/9
+
+Installed:
+  dse-full.noarch 0:6.8.0-1
+
+Dependency Installed:
+  dse.noarch 0:6.8.0-1             dse-libcassandra.noarch 0:6.8.0-1     dse-libgraph.noarch 0:6.8.0-1      dse-libhadoop2-client.noarch 0:6.8.0-1     dse-liblog4j.noarch 0:6.8.0-1
+  dse-libsolr.noarch 0:6.8.0-1     dse-libspark.noarch 0:6.8.0-1         dse-libtomcat.noarch 0:6.8.0-1
+
+Complete!
+
+# service dse start
+Starting DSE daemon : dse
+DSE daemon starting with only Cassandra enabled (edit /etc/default/dse to enable other features)
+
+# service dse status
+dse is running
+
+# nodetool info
+ID                     : 84bb5e50-f8dc-4f71-96d9-54917dc28275
+Gossip active          : true
+Native Transport active: true
+Status                 : OK
+Load                   : 194.08 KiB
+Generation No          : 1588149061
+Uptime (seconds)       : 163
+Heap Memory (MB)       : 1612.35 / 2964.00
+Off Heap Memory (MB)   : 0.01
+Data Center            : Cassandra
+Rack                   : rack1
+Exceptions             : 0
+Key Cache              : entries 0, size 0 bytes, capacity 100 MiB, 0 hits, 0 requests, NaN recent hit rate, 14400 save period in seconds
+Row Cache              : entries 0, size 0 bytes, capacity 0 bytes, 0 hits, 0 requests, NaN recent hit rate, 0 save period in seconds
+Counter Cache          : entries 0, size 0 bytes, capacity 50 MiB, 0 hits, 0 requests, NaN recent hit rate, 7200 save period in seconds
+Chunk Cache            : entries 75, size 444 KiB, capacity 2.06 GiB, 75 misses, 594 requests, 0.874 recent hit rate, 1669.240 microseconds miss latency
+Percent Repaired       : NaN%
+Token                  : -7676947935534642756
+
+
+# nodetool status
+Datacenter: Cassandra
+=====================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving/Stopped
+--  Address    Load       Owns (effective)  Host ID                               Token                                    Rack
+UN  127.0.0.1  194.08 KiB  100.0%            84bb5e50-f8dc-4f71-96d9-54917dc28275  -7676947935534642756                     rack1
+
+# netstat -tulnp | egrep 'java'
+tcp        0      0 127.0.0.1:9042          0.0.0.0:*               LISTEN      3618/java
+tcp        0      0 127.0.0.1:7000          0.0.0.0:*               LISTEN      3618/java
+tcp        0      0 127.0.0.1:7199          0.0.0.0:*               LISTEN      3618/java
+tcp        0      0 127.0.0.1:40033         0.0.0.0:*               LISTEN      3618/java
+tcp        0      0 127.0.0.1:8609          0.0.0.0:*               LISTEN      3618/java
+
+# cqlsh -u dse -p dse -e "describe keyspaces;"
+
+system_virtual_schema  system_schema  dse_leases          system_traces
+dse_system_local       system_auth    system_backups      dse_perf
+dse_security           system_views   dse_insights        dse_insights_local
+solr_admin             system         system_distributed  dse_system
+```
+
+
+## Flight data parsing and loading
+
+### Create keyspace called airport
+```
+# cqlsh -u dse -p dse -e "create keyspace airport with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };"
+
+# cqlsh -u dse -p dse -e "describe keyspace airport;"
+CREATE KEYSPACE airport WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
+```
+
+### Example table structure
+```
+   id                  int PRIMARY KEY,
+   year                int,
+   day_of_month        int,
+   fl_date             timestamp,
+   airline_id          int,
+   carrier             varchar,
+   fl_num              int,
+   origin_airport_id   int,
+   origin              varchar,
+   origin_city_name    varchar,
+   origin_state_abr    varchar,
+   dest_airport_id     varchar,
+   dest_city_name      varchar,
+   dest_state_abr      varchar,
+   dep_time            timestamp,
+   arr_time            timestamp,
+   actual_elapsed_time timestamp,
+   air_time            timestamp,
+   distance            int
+```
+
+### Examine data set
+```
+# head -5 flights_from_pg.csv
+3,2012,1,2012/11/11,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,855,1142,347,330,2475
+4,2012,2,2012/01/02,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,921,1210,349,325,2475
+5,2012,3,2012/01/03,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,931,1224,353,319,2475
+6,2012,4,2012/01/04,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,904,1151,347,309,2475
+7,2012,5,2012/01/05,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,858,1142,344,306,2475
+
+# wc -l flights_from_pg.csv
+ 1048575 flights_from_pg.csv
+```
+
+### Check id is unique
+```
+# cat flights_from_pg.csv | awk -F ',' '{print $1}' | sort -V | wc -l
+1048576
+# cat flights_from_pg.csv | awk -F ',' '{print $1}' | sort -u | wc -l
+1048576
+# uni
+unicode_start  unicode_stop   uniq           unix_chkpwd    unix_update
+# cat flights_from_pg.csv | awk -F ',' '{print $1}' | uniq -d flights_from_pg.csv
+```
+
+### Convert date to ISO YYYY-MM-DD from YYYY/MM/DD
+```
+cat flights_from_pg.csv | sed 's/\//-/g' > flights_data.csv
+```
+
+### Investigate field types, try date offsets as type int
+```
+# head -1 flights_data.csv
+3,2012,1,2012-11-11,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,855,1142,347,330,2475
+
+# head -1 flights_data.csv | awk -F ',' '{ printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19 }'
+3,2012,1,2012-11-11,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,855,1142,347,330,2475
+
+# head -1 flights_data.csv | awk -F ',' '{ printf "%d,%d,%d,%s,%d,%s,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d,%d\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19 }'
+3,2012,1,2012-11-11,19805,AA,1,12478,JFK,New York, NY,LAX,Los Angeles, CA,855,1142,347,330,2475
+
+## trim the US State code fields leading space:
+# head -1 flights_data.csv | awk -F ',' 'function trim(f){gsub(/^ +| +$/,"", f);return f}{ printf "%d,%d,%d,%s,%d,%s,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d,%d\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,trim($11),$12,$13,trim($14),$15,$16,$17,$18,$19 }'
+3,2012,1,2012-11-11,19805,AA,1,12478,JFK,New York,NY,LAX,Los Angeles,CA,855,1142,347,330,2475
+
+# cat flights_data.csv | awk -F ',' 'function trim(f){gsub(/^ +| +$/,"", f);return f}{ printf "%d,%d,%d,%s,%d,%s,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d,%d\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,trim($11),$12,$13,trim($14),$15,$16,$17,$18,$19 }' > flights_data_cleaned.csv
+
+```
+
+### Create a flights table
+```
+cat <<EOF>> airport-flights-ddl.cql
+CREATE TABLE IF NOT EXISTS airport.flights
+  (id                  int PRIMARY KEY,
+   year                int,
+   day_of_month        int,
+   fl_date             timestamp,
+   airline_id          int,
+   carrier             varchar,
+   fl_num              int,
+   origin_airport_id   int,
+   origin              varchar,
+   origin_city_name    varchar,
+   origin_state_abr    varchar,
+   dest                varchar,
+   dest_city_name      varchar,
+   dest_state_abr      varchar,
+   dep_time            int,
+   arr_time            int,
+   actual_elapsed_time int,
+   air_time            int,
+   distance            int,
+);
+EOF
+
+# cqlsh -u dse -p dse -f airport-flights-ddl.cql
+# cqlsh -u dse -p dse -e "describe airport.flights;"
+CREATE TABLE airport.flights (
+    id int PRIMARY KEY,
+    actual_elapsed_time int,
+    air_time int,
+    airline_id int,
+    arr_time int,
+    carrier text,
+    day_of_month int,
+    dep_time int,
+    dest text,
+    dest_city_name text,
+    dest_state_abr text,
+    distance int,
+    fl_date timestamp,
+    fl_num int,
+    origin text,
+    origin_airport_id int,
+    origin_city_name text,
+    origin_state_abr text,
+    year int
+) WITH additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND nodesync = {'enabled': 'true', 'incremental': 'true'}
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+```
+
+### Bulk csv data load from file
+```
+# time cqlsh -u dse -p dse -e "COPY airport.flights(id,year,day_of_month,fl_date,airline_id,carrier,fl_num,origin_airport_id,origin,origin_city_name,origin_state_abr,dest,dest_city_name,dest_state_abr,dep_time,arr_time,actual_elapsed_time,air_time,distance) FROM './flights_data_cleaned.csv';"
+Using 3 child processes
+
+Starting copy of airport.flights with columns [id, year, day_of_month, fl_date, airline_id, carrier, fl_num, origin_airport_id, origin, origin_city_name, origin_state_abr, dest, dest_city_name, dest_state_abr, dep_time, arr_time, actual_elapsed_time, air_time, distance].
+Processed: 1048576 rows; Rate:    4835 rows/s; Avg. rate:    4703 rows/s
+1048576 rows imported from 1 files in 3 minutes and 42.942 seconds (0 skipped).
+
+real	3m44.100s
+user	9m36.773s
+sys	0m27.404s
+
+# cqlsh -u dse -p dse -e "select * from airport.flights where id in (3, 1048578);"
+
+ id      | actual_elapsed_time | air_time | airline_id | arr_time | carrier | day_of_month | dep_time | dest | dest_city_name | dest_state_abr | distance | fl_date                         | fl_num | origin | origin_airport_id | origin_city_name | origin_state_abr | year
+---------+---------------------+----------+------------+----------+---------+--------------+----------+------+----------------+----------------+----------+---------------------------------+--------+--------+-------------------+------------------+------------------+------
+       3 |                 347 |      330 |      19805 |     1142 |      AA |            1 |      855 |  LAX |    Los Angeles |             CA |     2475 | 2012-11-11 00:00:00.000000+0000 |      1 |    JFK |             12478 |         New York |               NY | 2012
+ 1048578 |                 126 |      101 |      19790 |     2240 |      DL |            2 |     2134 |  MDW |        Chicago |             IL |      591 | 2012-01-02 00:00:00.000000+0000 |   2346 |    ATL |             10397 |          Atlanta |               GA | 2012
+
+(2 rows)
+```
+
+## Table of flights leaving LAX, sorted by time
+Create and populate a Cassandra table designed to list all flights leaving a particular airport, sorted by time  
+
+Note that long running queries will hit the default cqlsh utility timeouts, extending these with client overrides:
+```
+# time /bin/cqlsh -e "select count(\*) from airport.flights;"
+<stdin>:1:OperationTimedOut: errors={'127.0.0.1:9042': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=127.0.0.1:9042
+
+real	0m11.154s
+user	0m0.903s
+sys	0m0.182s
+
+# time /bin/cqlsh --connect-timeout=300 --request-timeout=180  -e "select count(*) from airport.flights;"
+
+ count
+---------
+ 1048576
+
+(1 rows)
+
+Warnings :
+Aggregation query used without partition key
+
+
+real	0m29.602s
+user	0m0.923s
+sys	0m0.172s
+
+# alias cqlsh='/bin/cqlsh --connect-timeout=300 --request-timeout=180 '
+
+```
+
+### Create a table of airport codes
+```
+# cat <<EOF>> airport-airport_codes-ddl.cql
+CREATE TABLE IF NOT EXISTS airport.airport_codes
+(
+   airport_code        varchar PRIMARY KEY,
+   count               int
+);
+EOF
+
+# cqlsh -f airport-airport_codes-ddl.cql
+# cat flights_data_cleaned.csv | awk -F ',' '{ printf "%s,0\n",$9}' | sort -u > airport_codes.csv
+# cqlsh -e "COPY airport.airport_codes(airport_code,count) FROM './airport_codes.csv';"
+
+```
