@@ -463,4 +463,5 @@ Now capturing query output to 'LAX.out1'.
 <stdin>:1:ReadTimeout: Error from server: code=1200 [Coordinator node timed out waiting for replica nodes' responses] message="Operation timed out - received only 0 responses." info={'received_responses': 0, 'required_responses': 1, 'consistency': 'ONE'}
 
 ```
+Can't see any errors in the backend logs, also checked that VM (12GB memory, 4 vcpu) is not running out of memory.  
 
