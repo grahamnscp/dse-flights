@@ -405,7 +405,8 @@ sys	0m0.172s
 
 ```
 
-### Create a table of airport codes
+### WIP
+Create a table of airport codes
 ```
 # cat <<EOF>> airport-airport_codes-ddl.cql
 CREATE TABLE IF NOT EXISTS airport.airport_codes
@@ -420,3 +421,46 @@ EOF
 # cqlsh -e "COPY airport.airport_codes(airport_code,count) FROM './airport_codes.csv';"
 
 ```
+
+How many rows with flights originating from LAX?
+
+```
+# cqlsh -e "select count(*) from airport.flights where origin='LAX' allow filtering;"
+
+ count
+-------
+ 38822
+
+(1 rows)
+
+Warnings :
+Aggregation query used without partition key
+```
+but :/
+```
+# cqlsh -e "paging off; select * from airport.flights where origin='LAX' allow filtering;"
+Disabled Query paging.
+<stdin>:1:ReadTimeout: Error from server: code=1200 [Coordinator node timed out waiting for replica nodes' responses] message="Operation timed out - received only 0 responses." info={'received_responses': 0, 'required_responses': 1, 'consistency': 'ONE'}
+```
+and :/
+```
+# cqlsh -e "paging off; capture 'LAX.out1'; select * from airport.flights where origin='LAX' allow filtering;"
+Disabled Query paging.
+Now capturing query output to 'LAX.out1'.
+<stdin>:1:ReadTimeout: Error from server: code=1200 [Coordinator node timed out waiting for replica nodes' responses] message="Operation timed out - received only 0 responses." info={'received_responses': 0, 'required_responses': 1, 'consistency': 'ONE'}
+[root@dse cql]# l LAX.out1
+-rw-r--r--. 1 root root 0 Apr 29 15:19 LAX.out1
+
+# cqlsh -e "paging 10000; capture 'LAX.out1'; select * from airport.flights where origin='LAX' allow filtering;"
+Page size: 10000
+Now capturing query output to 'LAX.out1'.
+[root@dse cql]# wc -l LAX.out1
+11115 LAX.out1
+
+# cqlsh -e "paging 20000; capture 'LAX.out1'; select * from airport.flights where origin='LAX' allow filtering;"
+Page size: 20000
+Now capturing query output to 'LAX.out1'.
+<stdin>:1:ReadTimeout: Error from server: code=1200 [Coordinator node timed out waiting for replica nodes' responses] message="Operation timed out - received only 0 responses." info={'received_responses': 0, 'required_responses': 1, 'consistency': 'ONE'}
+
+```
+
