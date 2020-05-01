@@ -835,8 +835,7 @@ Doc reference: https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/
 Connected to Test Cluster at 127.0.0.1:9042.
 [cqlsh 6.8.0 | DSE 6.8.0 | CQL spec 3.4.5 | DSE protocol v2]
 Use HELP for help.
-cqlsh> use airport
-   ... ;
+cqlsh> use airport;
 cqlsh:airport> CREATE SEARCH INDEX ON airport.flightlog ;
 
 Warnings :
@@ -881,6 +880,63 @@ CREATE TABLE airport.flightlog (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99PERCENTILE';
 CREATE CUSTOM INDEX airport_flightlog_solr_query_index ON airport.flightlog (solr_query) USING 'com.datastax.bdp.search.solr.Cql3SolrSecondaryIndex';
+
+cqlsh:airport> ALTER SEARCH INDEX CONFIG ON airport.flightlog SET autoCommitTime = 30000;
+cqlsh:airport> DESCRIBE pending SEARCH INDEX CONFIG on airport.flightlog;
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<config>
+  <luceneMatchVersion>LUCENE_6_0_1</luceneMatchVersion>
+  <dseTypeMappingVersion>2</dseTypeMappingVersion>
+  <directoryFactory class="solr.StandardDirectoryFactory" name="DirectoryFactory"/>
+  <indexConfig>
+    <rt>false</rt>
+  </indexConfig>
+  <jmx/>
+  <updateHandler>
+    <autoSoftCommit>
+      <maxTime>30000</maxTime>
+    </autoSoftCommit>
+  </updateHandler>
+  <query>
+    <filterCache class="solr.SolrFilterCache" highWaterMarkMB="2048" lowWaterMarkMB="1024"/>
+    <enableLazyFieldLoading>true</enableLazyFieldLoading>
+    <useColdSearcher>true</useColdSearcher>
+    <maxWarmingSearchers>16</maxWarmingSearchers>
+  </query>
+  <requestDispatcher>
+    <requestParsers enableRemoteStreaming="true" multipartUploadLimitInKB="2048000"/>
+    <httpCaching never304="true"/>
+  </requestDispatcher>
+  <requestHandler class="solr.SearchHandler" default="true" name="search"/>
+  <requestHandler class="com.datastax.bdp.search.solr.handler.component.CqlSearchHandler" name="solr_query"/>
+  <requestHandler class="solr.UpdateRequestHandler" name="/update"/>
+  <requestHandler class="solr.UpdateRequestHandler" name="/update/csv" startup="lazy"/>
+  <requestHandler class="solr.UpdateRequestHandler" name="/update/json" startup="lazy"/>
+  <requestHandler class="solr.FieldAnalysisRequestHandler" name="/analysis/field" startup="lazy"/>
+  <requestHandler class="solr.DocumentAnalysisRequestHandler" name="/analysis/document" startup="lazy"/>
+  <requestHandler class="solr.admin.AdminHandlers" name="/admin/"/>
+  <requestHandler class="solr.PingRequestHandler" name="/admin/ping">
+    <lst name="invariants">
+      <str name="qt">search</str>
+      <str name="q">solrpingquery</str>
+    </lst>
+    <lst name="defaults">
+      <str name="echoParams">all</str>
+    </lst>
+  </requestHandler>
+  <requestHandler class="solr.DumpRequestHandler" name="/debug/dump">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <str name="echoHandler">true</str>
+    </lst>
+  </requestHandler>
+</config>
+
+cqlsh:airport> RELOAD SEARCH INDEX ON airport.flightlog;
+
+Warnings :
+Operation executed on all nodes in DC Solr.
 ```
 
 
