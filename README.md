@@ -409,22 +409,7 @@ sys	0m0.172s
 
 ```
 
-### WIP
-Create a table of airport codes
-```
-# cat <<EOF>> airport-airport_codes-ddl.cql
-CREATE TABLE IF NOT EXISTS airport.airport_codes
-(
-   airport_code        varchar PRIMARY KEY,
-   count               int
-);
-EOF
-
-# cqlsh -f airport-airport_codes-ddl.cql
-# cat flights_data_cleaned.csv | awk -F ',' '{ printf "%s,0\n",$9}' | sort -u > airport_codes.csv
-# cqlsh -e "COPY airport.airport_codes(airport_code,count) FROM './airport_codes.csv';"
-
-```
+### Queries without using partition keys is bad!
 
 How many rows with flights originating from LAX?
 
