@@ -469,3 +469,389 @@ Now capturing query output to 'LAX.out1'.
 ```
 Can't see any errors in the backend logs, also checked that VM (12GB memory, 4 vcpu) is not running out of memory.  
 
+## Create table and loading data via python
+
+It's easier to manipulate dates via python than bash!
+
+Here is an example of using python with the python cassandra-driver and panda
+
+DSE documentation for the driver can be viewed here:  
+https://docs.datastax.com/en/driver-matrix/doc/driver_matrix/common/driverMatrix.html
+https://docs.datastax.com/en/developer/python-driver/3.23/installation/
+
+Some information relating to pandas can be found here:  
+https://pandas.pydata.org
+https://www.datacamp.com/community/blog/python-pandas-cheat-sheet
+https://www.datacamp.com/community/tutorials/python-data-science-cheat-sheet-basics
+
+load_data.py
+```
+from cassandra.cluster import Cluster
+from cassandra.cqlengine import columns
+from cassandra.cqlengine import connection
+from cassandra.cqlengine.query import BatchQuery
+from cassandra.cqlengine.management import sync_table
+from cassandra.cqlengine.models import Model
+
+from collections import Counter
+import uuid
+import pandas as pd
+import math
+import datetime as dt
+
+BATCH_SIZE=10000
+HOSTS = ['127.0.0.1']
+
+class FlightModel(Model):
+    __table_name__ = "flightlog"
+    __keyspace__   = "airport"
+
+    id                  = columns.Integer(primary_key=True)
+    year                = columns.Integer()
+    day_of_month        = columns.Integer()
+    fl_date             = columns.DateTime()
+    airline_id          = columns.Integer()
+    carrier             = columns.Text()
+    fl_num              = columns.Integer()
+    origin_airport_id   = columns.Integer()
+    origin              = columns.Text()
+    origin_city_name    = columns.Text()
+    origin_state_abr    = columns.Text()
+    dest                = columns.Text()
+    dest_city_name      = columns.Text()
+    dest_state_abr      = columns.Text()
+    dep_time            = columns.DateTime()
+    arr_time            = columns.DateTime()
+    actual_elapsed_time = columns.Integer()
+    air_time            = columns.Integer()
+    distance            = columns.Integer()
+
+
+def load_csv():
+    # create the table using the FlightModel
+    sync_table(FlightModel)
+
+    # load the data from a csv
+    df = pd.read_csv("flights_from_pg.csv", header=None)
+
+    df.columns = ['id',
+                  'year',
+                  'day_of_month',
+                  'fl_date',
+                  'airline_id',
+                  'carrier',
+                  'fl_num',
+                  'origin_airport_id',
+                  'origin',
+                  'origin_city_name',
+                  'origin_state_abr',
+                  'dest',
+                  'dest_city_name',
+                  'dest_state_abr',
+                  'dep_time',
+                  'arr_time',
+                  'actual_elapsed_time',
+                  'air_time',
+                  'distance']
+
+    # Combine dep_time and arr_time have 2400 values - change those to 0000
+    df.dep_time[df.dep_time == 2400] = 0
+    df.arr_time[df.arr_time == 2400] = 0
+
+    # add the date parts to the departure and arrival times
+    padtime = lambda x: "%04d" % x
+    df.dep_time = df.fl_date + " " + df.dep_time.apply(padtime)
+    df.arr_time = df.fl_date + " " + df.arr_time.apply(padtime)
+
+    # convert all the timestamp types to pandas datetimes
+    df.fl_date  = pd.to_datetime(df.fl_date)
+    df.dep_time = pd.to_datetime(df.dep_time)
+    df.arr_time = pd.to_datetime(df.arr_time)
+
+    # output the table data: rows, columns
+    print(df.shape)
+
+    # Apply/load the data to the table..
+    df.apply( lambda r: FlightModel.create(**r.to_dict()), axis=1)
+
+
+
+########
+# Main #
+########
+
+# Initialise connection to cluster
+connection.setup(HOSTS, "cqlengine", protocol_version=3)
+
+# Populate the flightlog table
+load_csv()
+
+```
+
+Preparing centos 7 os to run the load_data.py script:
+```
+# yum install -y python3-pip
+# pip3 install cassandra-driver
+# pip3 install pandas
+# pip3 install python-lambda-local
+```
+
+Running the load_data.py script:
+```
+# python3 load_data.py
+load_data.py:74: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dep_time[df.dep_time == 2400] = 0
+load_data.py:75: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.arr_time[df.arr_time == 2400] = 0
+(1048576, 19)
+#
+# cqlsh -e "select count(*) from airport.flightlog;
+
+ count
+---------
+ 1048576
+
+(1 rows)
+```
+
+airport.flightlog table definition:
+```
+# cqlsh -e "describe airport.flightlog;"
+
+CREATE TABLE airport.flightlog (
+    id int PRIMARY KEY,
+    actual_elapsed_time int,
+    air_time int,
+    airline_id int,
+    arr_time timestamp,
+    carrier text,
+    day_of_month int,
+    dep_time timestamp,
+    dest text,
+    dest_city_name text,
+    dest_state_abr text,
+    distance int,
+    fl_date timestamp,
+    fl_num int,
+    origin text,
+    origin_airport_id int,
+    origin_city_name text,
+    origin_state_abr text,
+    year int
+) WITH additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND nodesync = {'enabled': 'true', 'incremental': 'true'}
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE MATERIALIZED VIEW airport.departures_mv AS
+    SELECT *
+    FROM airport.flightlog
+    WHERE origin IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (origin, id)
+    WITH CLUSTERING ORDER BY (id ASC)
+    AND additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE MATERIALIZED VIEW airport.dep_time_mv AS
+    SELECT *
+    FROM airport.flightlog
+    WHERE dep_time IS NOT NULL AND origin IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (dep_time, id)
+    WITH CLUSTERING ORDER BY (id ASC)
+    AND additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+```
+
+## Materialized Views
+
+Cassandra supports adding additional indexes onto a table containing base data, however this has performance implications with the clustering of data across the cluster.
+A better solution is to use Materialized Views, which create a copy of the selected data stored and clustered as desired for the required queries.
+Materialised Views have the benefit that they will be updated when data is changed in the source table vs importing separate tables from an external data source (csv in this test case) which would require updating independantly.
+
+Materialized view for departures allowing queries on origin airport code:
+```
+# cqlsh -e "create materialized view airport.departures_mv as select * from airport.flightlog where origin is not null and id is not null primary key (origin, id) ;
+"
+# cqlsh -e "describe airport.departures_mv;"
+
+CREATE MATERIALIZED VIEW airport.departures_mv AS
+    SELECT *
+    FROM airport.flightlog
+    WHERE origin IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (origin, id)
+    WITH CLUSTERING ORDER BY (id ASC)
+    AND additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+```
+
+Example query using the view departures_mv:
+```
+# cqlsh -e "select dep_time, origin, fl_num from airport.departures_mv where origin='SFO' limit 10;"
+
+ dep_time                        | origin | fl_num
+---------------------------------+--------+--------
+ 2012-01-20 00:32:00.000000+0000 |    SFO |     18
+ 2012-01-18 14:58:00.000000+0000 |    SFO |     20
+ 2012-01-28 14:54:00.000000+0000 |    SFO |     20
+ 2012-01-08 06:54:00.000000+0000 |    SFO |     24
+ 2012-01-25 06:55:00.000000+0000 |    SFO |     24
+ 2012-01-28 06:53:00.000000+0000 |    SFO |     24
+ 2012-01-17 22:13:00.000000+0000 |    SFO |    272
+ 2012-01-21 22:03:00.000000+0000 |    SFO |    272
+ 2012-01-23 23:33:00.000000+0000 |    SFO |    272
+ 2012-01-11 07:40:00.000000+0000 |    SFO |    312
+
+(10 rows)
+```
+
+Materialized view for flight departure time window queries:
+```
+# cqlsh -e "create materialized view airport.dep_time_mv as select * from airport.flightlog where dep_time is not null and origin is not null and id is not null primary key (dep_time, id);"
+# cqlsh -e "describe airport.dep_time_mv;"
+
+CREATE MATERIALIZED VIEW airport.dep_time_mv AS
+    SELECT *
+    FROM airport.flightlog
+    WHERE dep_time IS NOT NULL AND origin IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (dep_time, id)
+    WITH CLUSTERING ORDER BY (id ASC)
+    AND additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+```
+
+Example query using the view airport.dep_time_mv:
+```
+select dep_time, origin, fl_num from airport.dep_time_mv where origin='DFW' and dep_time >= '2012-01-20 10:00:00' and dep_time <= '2012-01-20 10:10' allow filtering;
+
+ dep_time                        | origin | fl_num
+---------------------------------+--------+--------
+ 2012-01-20 10:08:00.000000+0000 |    DFW |   1087
+ 2012-01-20 10:08:00.000000+0000 |    DFW |   4921
+ 2012-01-20 10:08:00.000000+0000 |    DFW |   1087
+ 2012-01-20 10:08:00.000000+0000 |    DFW |   4921
+ 2012-01-20 10:08:00.000000+0000 |    DFW |   1087
+ 2012-01-20 10:04:00.000000+0000 |    DFW |    493
+ 2012-01-20 10:04:00.000000+0000 |    DFW |    493
+ 2012-01-20 10:04:00.000000+0000 |    DFW |    493
+ 2012-01-20 10:05:00.000000+0000 |    DFW |    654
+ 2012-01-20 10:05:00.000000+0000 |    DFW |    654
+ 2012-01-20 10:05:00.000000+0000 |    DFW |    654
+ 2012-01-20 10:09:00.000000+0000 |    DFW |    689
+ 2012-01-20 10:09:00.000000+0000 |    DFW |    689
+ 2012-01-20 10:09:00.000000+0000 |    DFW |    689
+ 2012-01-20 10:10:00.000000+0000 |    DFW |    712
+ 2012-01-20 10:10:00.000000+0000 |    DFW |    712
+ 2012-01-20 10:10:00.000000+0000 |    DFW |    712
+ 2012-01-20 10:01:00.000000+0000 |    DFW |   1331
+ 2012-01-20 10:01:00.000000+0000 |    DFW |   1331
+ 2012-01-20 10:01:00.000000+0000 |    DFW |   1331
+ 2012-01-20 10:02:00.000000+0000 |    DFW |   1599
+ 2012-01-20 10:02:00.000000+0000 |    DFW |   1599
+ 2012-01-20 10:02:00.000000+0000 |    DFW |   1599
+ 2012-01-20 10:00:00.000000+0000 |    DFW |   2748
+ 2012-01-20 10:00:00.000000+0000 |    DFW |   2748
+
+(25 rows)
+```
+
+## Enable Search SOLR in DSE:
+
+Uncomment SOLR_ENABLED flag and set to 1 in /etc/default/dse file:
+```
+# egrep "SOLR|Search" /etc/default/dse
+# Start the node in DSE Search mode
+#SOLR_ENABLED=0
+SOLR_ENABLED=1
+```
+
+Restart the dse init.d service:
+```
+# service dse stop
+
+# sleep 5
+
+# service dse start
+
+# sleep 10
+
+# service dse status
+dse is running
+
+# nodetool status
+Datacenter: Solr
+================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving/Stopped
+--  Address    Load       Owns (effective)  Host ID                               Token                                    Rack
+UN  127.0.0.1  365.51 MiB  100.0%            84bb5e50-f8dc-4f71-96d9-54917dc28275  -7676947935534642756                     rack1
+
+```
+
+## DSE Search
+Documentation reference: https://docs.datastax.com/en/dse/6.7/dse-admin/datastax_enterprise/search/searchTOC.html
+
