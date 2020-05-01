@@ -1043,4 +1043,16 @@ scala> ^D
 scala> :quit
 ```
 
+### SOLR Query via CQL
+
+Quick test:
+```
+# cqlsh -k airport -e "select * from flightlog where solr_query='id:3';"
+
+ id | actual_elapsed_time | air_time | airline_id | arr_time                        | carrier | day_of_month | dep_time                        | dest | dest_city_name | dest_state_abr | distance | fl_date                         | fl_num | origin | origin_airport_id | origin_city_name | origin_state_abr | solr_query | year
+----+---------------------+----------+------------+---------------------------------+---------+--------------+---------------------------------+------+----------------+----------------+----------+---------------------------------+--------+--------+-------------------+------------------+------------------+------------+------
+  3 |                 347 |      330 |      19805 | 2012-11-11 11:42:00.000000+0000 |      AA |            1 | 2012-11-11 08:55:00.000000+0000 |  LAX |    Los Angeles |             CA |     2475 | 2012-11-11 00:00:00.000000+0000 |      1 |    JFK |             12478 |         New York |               NY |       null | 2012
+
+(1 rows)
+```
 
