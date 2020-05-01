@@ -655,8 +655,7 @@ Materialised Views have the benefit that they will be updated when data is chang
 
 Materialized view for departures allowing queries on origin airport code:
 ```
-# cqlsh -e "create materialized view airport.departures_mv as select * from airport.flightlog where origin is not null and id is not null primary key (origin, id) ;
-"
+# cqlsh -e "create materialized view airport.departures_mv as select * from airport.flightlog where origin is not null and id is not null primary key (origin, id);"
 # cqlsh -e "describe airport.departures_mv;"
 
 CREATE MATERIALIZED VIEW airport.departures_mv AS
@@ -683,6 +682,14 @@ CREATE MATERIALIZED VIEW airport.departures_mv AS
 
 Example query using the view departures_mv:
 ```
+# cqlsh -e "select count(*) from airport.departures_mv where origin='SFO'"
+
+ count
+-------
+ 28386
+
+(1 rows)
+
 # cqlsh -e "select dep_time, origin, fl_num from airport.departures_mv where origin='SFO' limit 10;"
 
  dep_time                        | origin | fl_num
@@ -763,7 +770,10 @@ select dep_time, origin, fl_num from airport.dep_time_mv where origin='DFW' and 
 (25 rows)
 ```
 
-## Enable Search SOLR in DSE:
+## DSE Search
+Documentation reference: https://docs.datastax.com/en/dse/6.7/dse-admin/datastax_enterprise/search/searchTOC.html
+
+### Enable Search SOLR in DSE:
 
 Uncomment SOLR_ENABLED flag and set to 1 in /etc/default/dse file:
 ```
@@ -794,8 +804,22 @@ Status=Up/Down
 --  Address    Load       Owns (effective)  Host ID                               Token                                    Rack
 UN  127.0.0.1  365.51 MiB  100.0%            84bb5e50-f8dc-4f71-96d9-54917dc28275  -7676947935534642756                     rack1
 
-```
+# netstat -tulnp | grep java
+tcp        0      0 127.0.0.1:9042          0.0.0.0:*               LISTEN      24224/java
+tcp        0      0 127.0.0.1:8983          0.0.0.0:*               LISTEN      24224/java
+tcp        0      0 127.0.0.1:7000          0.0.0.0:*               LISTEN      24224/java
+tcp        0      0 127.0.0.1:39418         0.0.0.0:*               LISTEN      24224/java
+tcp        0      0 127.0.0.1:7199          0.0.0.0:*               LISTEN      24224/java
+tcp        0      0 127.0.0.1:8609          0.0.0.0:*               LISTEN      24224/java
 
-## DSE Search
-Documentation reference: https://docs.datastax.com/en/dse/6.7/dse-admin/datastax_enterprise/search/searchTOC.html
+# ls -latFrh /var/log/tomcat/
+total 24K
+drwxr-xr-x. 12 root      root      4.0K May  1 03:07 ../
+-rw-r--r--.  1 cassandra cassandra    0 May  1 14:32 localhost.2020-05-01.log
+-rw-r--r--.  1 cassandra cassandra    0 May  1 14:32 manager.2020-05-01.log
+-rw-r--r--.  1 cassandra cassandra    0 May  1 14:32 host-manager.2020-05-01.log
+drwxr-xr-x.  2 cassandra cassandra  134 May  1 14:32 ./
+-rw-r--r--.  1 cassandra cassandra  17K May  1 14:38 catalina.2020-05-01.log
+
+```
 
