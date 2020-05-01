@@ -1054,5 +1054,14 @@ Quick test:
   3 |                 347 |      330 |      19805 | 2012-11-11 11:42:00.000000+0000 |      AA |            1 | 2012-11-11 08:55:00.000000+0000 |  LAX |    Los Angeles |             CA |     2475 | 2012-11-11 00:00:00.000000+0000 |      1 |    JFK |             12478 |         New York |               NY |       null | 2012
 
 (1 rows)
+
+# cqlsh -k airport -e "paging 20000; select count(*) from flightlog where solr_query='origin:HNL AND year:2012 AND day_of_month:25';"
+Page size: 20000
+
+ count
+-------
+   288
+
+(1 rows)
 ```
 
