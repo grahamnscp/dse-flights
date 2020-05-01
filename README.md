@@ -775,12 +775,15 @@ Documentation reference: https://docs.datastax.com/en/dse/6.7/dse-admin/datastax
 
 ### Enable Search SOLR in DSE:
 
-Uncomment SOLR_ENABLED flag and set to 1 in /etc/default/dse file:
+Uncomment SOLR_ENABLED and SPARK_ENABLED flags and set to 1 in /etc/default/dse file:
 ```
-# egrep "SOLR|Search" /etc/default/dse
-# Start the node in DSE Search mode
+# egrep  "SOLR|SPARK" /etc/default/dse
 #SOLR_ENABLED=0
 SOLR_ENABLED=1
+#SPARK_ENABLED=0
+SPARK_ENABLED=1
+#SPARK_HOME=your_spark_install_location
+SPARK_CONF_DIR=/etc/dse/spark
 ```
 
 Restart the dse init.d service:
@@ -790,6 +793,9 @@ Restart the dse init.d service:
 # sleep 5
 
 # service dse start
+Starting DSE daemon : dse
+DSE daemon starting with Solr enabled (edit /etc/default/dse to disable)
+DSE daemon starting with Spark enabled (edit /etc/default/dse to disable)
 
 # sleep 10
 
@@ -797,20 +803,29 @@ Restart the dse init.d service:
 dse is running
 
 # nodetool status
-Datacenter: Solr
-================
+Datacenter: SearchAnalytics
+===========================
 Status=Up/Down
 |/ State=Normal/Leaving/Joining/Moving/Stopped
 --  Address    Load       Owns (effective)  Host ID                               Token                                    Rack
-UN  127.0.0.1  365.51 MiB  100.0%            84bb5e50-f8dc-4f71-96d9-54917dc28275  -7676947935534642756                     rack1
+UN  127.0.0.1  367.49 MiB  100.0%            84bb5e50-f8dc-4f71-96d9-54917dc28275  -7676947935534642756                     rack1
 
 # netstat -tulnp | grep java
-tcp        0      0 127.0.0.1:9042          0.0.0.0:*               LISTEN      24224/java
-tcp        0      0 127.0.0.1:8983          0.0.0.0:*               LISTEN      24224/java
-tcp        0      0 127.0.0.1:7000          0.0.0.0:*               LISTEN      24224/java
-tcp        0      0 127.0.0.1:39418         0.0.0.0:*               LISTEN      24224/java
-tcp        0      0 127.0.0.1:7199          0.0.0.0:*               LISTEN      24224/java
-tcp        0      0 127.0.0.1:8609          0.0.0.0:*               LISTEN      24224/java
+# netstat -tulnp | grep java
+tcp        0      0 127.0.0.1:9042          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7447          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:8983          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7000          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:5598          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:5599          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7199          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:8609          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7077          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7080          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7081          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:7437          0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:43566         0.0.0.0:*               LISTEN      27802/java
+tcp        0      0 127.0.0.1:37232         0.0.0.0:*               LISTEN      27802/java
 
 # ls -latFrh /var/log/tomcat/
 total 24K
@@ -937,6 +952,33 @@ cqlsh:airport> RELOAD SEARCH INDEX ON airport.flightlog;
 
 Warnings :
 Operation executed on all nodes in DC Solr.
+```
+
+### SPARK Console
+
+Doc reference: https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/spark/dseSearchAnalyticsWikipediaDemo.html
+
+```
+# dse spark
+The log file is at /root/.spark-shell.log
+Creating a new Spark Session
+Spark context Web UI available at http://dse.glocal.lab:4040
+Spark Context available as 'sc' (master = dse://?, app id = app-20200501185541-0000).
+Spark Session available as 'spark'.
+Spark SqlContext (Deprecated use Spark Session instead) available as 'sqlContext'
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.4.0.13
+      /_/
+
+Using Scala version 2.11.12 (OpenJDK 64-Bit Server VM, Java 1.8.0_242)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> ^D
+scala> :quit
 ```
 
 
