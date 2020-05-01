@@ -979,6 +979,32 @@ Using Scala version 2.11.12 (OpenJDK 64-Bit Server VM, Java 1.8.0_242)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
+scala> :help
+All commands can be abbreviated, e.g., :he instead of :help.
+:edit <id>|<line>                                              edit history
+:help [command]                                                print this summary or command-specific help
+:history [num]                                                 show the history (optional num is commands to show)
+:h? <string>                                                   search the history
+:imports [name name ...]                                       show import history, identifying sources of names
+:implicits [-v]                                                show the implicits in scope
+:javap <path|class>                                            disassemble a file or class name
+:line <id>|<line>                                              place line(s) at the end of history
+:load <path>                                                   interpret lines in a file
+:paste [-raw] [path]                                           enter paste mode or paste a file
+:power                                                         enable power user mode
+:quit                                                          exit the interpreter
+:replay [options]                                              reset the repl and replay all previous commands
+:require <path>                                                add a jar to the classpath
+:reset [options]                                               reset the repl to its initial state, forgetting all session entries
+:save <path>                                                   save replayable session to a file
+:sh <command line>                                             run a shell command (result is implicitly => List[String])
+:settings <options>                                            update compiler options, if possible; see reset
+:silent                                                        disable/enable automatic printing of results
+:type [-v] <expr>                                              display the type of an expression without evaluating it
+:kind [-v] <expr>                                              display the kind of expression's type
+:warnings                                                      show the suppressed warnings from the most recent line which had any
+:showSchema [all]|<keyspace_name>|<keyspace_name> <table_name> show Cassandra schema
+
 scala> ^D
 scala> :quit
 ```
