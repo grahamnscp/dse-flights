@@ -1063,5 +1063,38 @@ Page size: 20000
    288
 
 (1 rows)
+
+# cqlsh -e "CREATE SEARCH INDEX ON airport.airport_codes;"
+# cqlsh -e "describe airport_codes;"
+
+CREATE TABLE airport.airport_codes (
+    airport_code text PRIMARY KEY,
+    count int,
+    solr_query text
+) WITH additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND nodesync = {'enabled': 'true', 'incremental': 'true'}
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+CREATE CUSTOM INDEX airport_airport_codes_solr_query_index ON airport.airport_codes (solr_query) USING 'com.datastax.bdp.search.solr.Cql3SolrSecondaryIndex';
+
+# cqlsh -e "select count(*) from airport_codes where solr_query='airport_code:A*';"
+
+ count
+-------
+    22
+
+(1 rows)
+
 ```
 
