@@ -954,6 +954,40 @@ cqlsh:airport> RELOAD SEARCH INDEX ON airport.flightlog;
 
 Warnings :
 Operation executed on all nodes in DC Solr.
+
+# cqlsh -k airport -e "DESCRIBE ACTIVE SEARCH INDEX SCHEMA ON flightlog;"
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<schema name="autoSolrSchema" version="1.5">
+  <types>
+    <fieldType class="org.apache.solr.schema.StrField" name="StrField"/>
+    <fieldType class="org.apache.solr.schema.TrieDateField" name="TrieDateField"/>
+    <fieldType class="org.apache.solr.schema.TrieIntField" name="TrieIntField"/>
+  </types>
+  <fields>
+    <field indexed="true" multiValued="false" name="dest_city_name" type="StrField"/>
+    <field indexed="true" multiValued="false" name="origin_city_name" type="StrField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="arr_time" type="TrieDateField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="distance" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="origin_airport_id" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="fl_date" type="TrieDateField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="year" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="dep_time" type="TrieDateField"/>
+    <field indexed="true" multiValued="false" name="dest" type="StrField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="actual_elapsed_time" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="air_time" type="TrieIntField"/>
+    <field indexed="true" multiValued="false" name="origin" type="StrField"/>
+    <field indexed="true" multiValued="false" name="dest_state_abr" type="StrField"/>
+    <field indexed="true" multiValued="false" name="origin_state_abr" type="StrField"/>
+    <field indexed="true" multiValued="false" name="carrier" type="StrField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="fl_num" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="day_of_month" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="id" type="TrieIntField"/>
+    <field docValues="true" indexed="true" multiValued="false" name="airline_id" type="TrieIntField"/>
+  </fields>
+  <uniqueKey>id</uniqueKey>
+</schema>
+
 ```
 
 ### Accessing the SPARK Console
