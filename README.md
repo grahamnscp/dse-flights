@@ -990,7 +990,64 @@ Operation executed on all nodes in DC Solr.
 
 ```
 
-### Accessing the SPARK Console
+### SOLR Query via CQL
+
+Quick tests:
+```
+# cqlsh -k airport -e "select * from flightlog where solr_query='id:3';"
+
+ id | actual_elapsed_time | air_time | airline_id | arr_time                        | carrier | day_of_month | dep_time                        | dest | dest_city_name | dest_state_abr | distance | fl_date                         | fl_num | origin | origin_airport_id | origin_city_name | origin_state_abr | solr_query | year
+----+---------------------+----------+------------+---------------------------------+---------+--------------+---------------------------------+------+----------------+----------------+----------+---------------------------------+--------+--------+-------------------+------------------+------------------+------------+------
+  3 |                 347 |      330 |      19805 | 2012-11-11 11:42:00.000000+0000 |      AA |            1 | 2012-11-11 08:55:00.000000+0000 |  LAX |    Los Angeles |             CA |     2475 | 2012-11-11 00:00:00.000000+0000 |      1 |    JFK |             12478 |         New York |               NY |       null | 2012
+
+(1 rows)
+
+# cqlsh -k airport -e "select count(*) from flightlog where solr_query='origin:HNL AND year:2012 AND day_of_month:25';"
+
+ count
+-------
+   288
+
+(1 rows)
+
+# cqlsh -e "CREATE SEARCH INDEX ON airport.airport_codes;"
+# cqlsh -e "describe airport_codes;"
+
+CREATE TABLE airport.airport_codes (
+    airport_code text PRIMARY KEY,
+    count int,
+    solr_query text
+) WITH additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND nodesync = {'enabled': 'true', 'incremental': 'true'}
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+CREATE CUSTOM INDEX airport_airport_codes_solr_query_index ON airport.airport_codes (solr_query) USING 'com.datastax.bdp.search.solr.Cql3SolrSecondaryIndex';
+
+# cqlsh -e "select count(*) from airport_codes where solr_query='airport_code:A*';"
+
+ count
+-------
+    22
+
+(1 rows)
+
+```
+### WIP: What originating airport had the most flights on 2012-01-23?
+...
+
+
+## Accessing the SPARK Console
 
 Doc reference: https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/spark/dseSearchAnalyticsWikipediaDemo.html
 
@@ -1043,58 +1100,5 @@ scala> ^D
 scala> :quit
 ```
 
-### SOLR Query via CQL
-
-Quick test:
-```
-# cqlsh -k airport -e "select * from flightlog where solr_query='id:3';"
-
- id | actual_elapsed_time | air_time | airline_id | arr_time                        | carrier | day_of_month | dep_time                        | dest | dest_city_name | dest_state_abr | distance | fl_date                         | fl_num | origin | origin_airport_id | origin_city_name | origin_state_abr | solr_query | year
-----+---------------------+----------+------------+---------------------------------+---------+--------------+---------------------------------+------+----------------+----------------+----------+---------------------------------+--------+--------+-------------------+------------------+------------------+------------+------
-  3 |                 347 |      330 |      19805 | 2012-11-11 11:42:00.000000+0000 |      AA |            1 | 2012-11-11 08:55:00.000000+0000 |  LAX |    Los Angeles |             CA |     2475 | 2012-11-11 00:00:00.000000+0000 |      1 |    JFK |             12478 |         New York |               NY |       null | 2012
-
-(1 rows)
-
-# cqlsh -k airport -e "paging 20000; select count(*) from flightlog where solr_query='origin:HNL AND year:2012 AND day_of_month:25';"
-Page size: 20000
-
- count
--------
-   288
-
-(1 rows)
-
-# cqlsh -e "CREATE SEARCH INDEX ON airport.airport_codes;"
-# cqlsh -e "describe airport_codes;"
-
-CREATE TABLE airport.airport_codes (
-    airport_code text PRIMARY KEY,
-    count int,
-    solr_query text
-) WITH additional_write_policy = '99PERCENTILE'
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND nodesync = {'enabled': 'true', 'incremental': 'true'}
-    AND read_repair = 'BLOCKING'
-    AND speculative_retry = '99PERCENTILE';
-CREATE CUSTOM INDEX airport_airport_codes_solr_query_index ON airport.airport_codes (solr_query) USING 'com.datastax.bdp.search.solr.Cql3SolrSecondaryIndex';
-
-# cqlsh -e "select count(*) from airport_codes where solr_query='airport_code:A*';"
-
- count
--------
-    22
-
-(1 rows)
-
-```
+### WIP: batch update to all records with a 'BOS' airport code using Spark and change the airport code to 'TST'
 
