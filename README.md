@@ -809,8 +809,10 @@ Status=Up/Down
 |/ State=Normal/Leaving/Joining/Moving/Stopped
 --  Address    Load       Owns (effective)  Host ID                               Token                                    Rack
 UN  127.0.0.1  367.49 MiB  100.0%            84bb5e50-f8dc-4f71-96d9-54917dc28275  -7676947935534642756                     rack1
+```
+Note the node type above is SearchAnalytics
 
-# netstat -tulnp | grep java
+```
 # netstat -tulnp | grep java
 tcp        0      0 127.0.0.1:9042          0.0.0.0:*               LISTEN      27802/java
 tcp        0      0 127.0.0.1:7447          0.0.0.0:*               LISTEN      27802/java
@@ -954,7 +956,7 @@ Warnings :
 Operation executed on all nodes in DC Solr.
 ```
 
-### SPARK Console
+### Accessing the SPARK Console
 
 Doc reference: https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/spark/dseSearchAnalyticsWikipediaDemo.html
 
