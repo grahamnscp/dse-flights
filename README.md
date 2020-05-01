@@ -827,6 +827,9 @@ drwxr-xr-x.  2 cassandra cassandra  134 May  1 14:32 ./
 ```
 
 ### Creating a search index on a table
+
+Doc reference: https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/search/searchIndexConfig.html
+
 ```
 # cqlsh
 Connected to Test Cluster at 127.0.0.1:9042.
