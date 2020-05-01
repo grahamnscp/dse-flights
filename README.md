@@ -1043,8 +1043,8 @@ CREATE CUSTOM INDEX airport_airport_codes_solr_query_index ON airport.airport_co
 (1 rows)
 
 ```
-### WIP: What originating airport had the most flights on 2012-01-23?
-...
+### WIP: Originating airport that had the most flights on 2012-01-23
+???
 
 
 ## Accessing the SPARK Console
@@ -1100,5 +1100,5 @@ scala> ^D
 scala> :quit
 ```
 
-### WIP: batch update to all records with a 'BOS' airport code using Spark and change the airport code to 'TST'
-...
+### WIP: SPARK batch update to change all airport codes from 'BOS' to 'TST'
+???
