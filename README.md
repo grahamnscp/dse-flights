@@ -826,3 +826,58 @@ drwxr-xr-x.  2 cassandra cassandra  134 May  1 14:32 ./
 01-May-2020 14:38:29.501 INFO [DSE main thread] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-bio-127.0.0.1-8983"]
 ```
 
+### Creating a search index on a table
+```
+# cqlsh
+Connected to Test Cluster at 127.0.0.1:9042.
+[cqlsh 6.8.0 | DSE 6.8.0 | CQL spec 3.4.5 | DSE protocol v2]
+Use HELP for help.
+cqlsh> use airport
+   ... ;
+cqlsh:airport> CREATE SEARCH INDEX ON airport.flightlog ;
+
+Warnings :
+Search index successfully created in distributed mode; executed index reload and reindex on all nodes in DC Solr.
+
+cqlsh:airport> describe airport.flightlog;
+
+CREATE TABLE airport.flightlog (
+    id int PRIMARY KEY,
+    actual_elapsed_time int,
+    air_time int,
+    airline_id int,
+    arr_time timestamp,
+    carrier text,
+    day_of_month int,
+    dep_time timestamp,
+    dest text,
+    dest_city_name text,
+    dest_state_abr text,
+    distance int,
+    fl_date timestamp,
+    fl_num int,
+    origin text,
+    origin_airport_id int,
+    origin_city_name text,
+    origin_state_abr text,
+    solr_query text,
+    year int
+) WITH additional_write_policy = '99PERCENTILE'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND nodesync = {'enabled': 'true', 'incremental': 'true'}
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99PERCENTILE';
+CREATE CUSTOM INDEX airport_flightlog_solr_query_index ON airport.flightlog (solr_query) USING 'com.datastax.bdp.search.solr.Cql3SolrSecondaryIndex';
+```
+
+
