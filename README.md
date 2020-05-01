@@ -821,5 +821,8 @@ drwxr-xr-x. 12 root      root      4.0K May  1 03:07 ../
 drwxr-xr-x.  2 cassandra cassandra  134 May  1 14:32 ./
 -rw-r--r--.  1 cassandra cassandra  17K May  1 14:38 catalina.2020-05-01.log
 
+# cat /var/log/tomcat/catalina.2020-05-01.log | grep http
+01-May-2020 14:38:29.436 INFO [DSE main thread] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-bio-127.0.0.1-8983"]
+01-May-2020 14:38:29.501 INFO [DSE main thread] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-bio-127.0.0.1-8983"]
 ```
 
