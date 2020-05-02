@@ -1135,9 +1135,17 @@ $ curl http://localhost:8983/solr/airport.flightlog/select?q=id:3&wt=json
 </response>
 ```
 
-### WIP: Originating airport that had the most flights on 2012-01-23
-???
-
+### Originating airport that had the most flights on 2012-01-23
+```
+# dse spark-sql -e "select fl_date,origin,count(*) as sum from airport.flightlog group by fl_date, origin order by fl_date,sum;" | egrep "2012-01-23|Time" | tail -5
+The log file is at /home/centos/.spark-sql-shell.log
+Time taken: 49.041 seconds, Fetched 8576 row(s)
+2012-01-23 00:00:00	LAX	1287
+2012-01-23 00:00:00	DEN	1342
+2012-01-23 00:00:00	DFW	1827
+2012-01-23 00:00:00	ORD	1860
+2012-01-23 00:00:00	ATL	2155
+```
 
 ## Accessing the SPARK Console
 
