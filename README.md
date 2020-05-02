@@ -1099,6 +1099,42 @@ CREATE CUSTOM INDEX airport_airport_codes_solr_query_index ON airport.airport_co
 (1 rows)
 
 ```
+
+### SOLR Query via web console
+```
+$ curl http://localhost:8983/solr/airport.flightlog/select?q=id:3&wt=json
+
+<response>
+  <lst name="responseHeader">
+    <int name="status">0</int>
+    <int name="QTime">2</int>
+  </lst>
+  <result name="response" numFound="1" start="0">
+    <doc>
+      <int name="id">3</int>
+      <int name="fl_num">1</int>
+      <int name="distance">2475</int>
+      <int name="year">2012</int>
+      <date name="dep_time">2012-11-11T08:55:00Z</date>
+      <str name="origin">JFK</str>
+      <int name="airline_id">19805</int>
+      <str name="dest">LAX</str>
+      <int name="day_of_month">1</int>
+      <str name="origin_city_name">New York</str>
+      <str name="dest_state_abr"> CA</str>
+      <str name="carrier">AA</str>
+      <str name="dest_city_name">Los Angeles</str>
+      <date name="fl_date">2012-11-11T00:00:00Z</date>
+      <int name="actual_elapsed_time">347</int>
+      <date name="arr_time">2012-11-11T11:42:00Z</date>
+      <int name="origin_airport_id">12478</int>
+      <int name="air_time">330</int>
+      <str name="origin_state_abr"> NY</str>
+    </doc>
+  </result>
+</response>
+```
+
 ### WIP: Originating airport that had the most flights on 2012-01-23
 ???
 
