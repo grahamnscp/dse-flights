@@ -1135,7 +1135,7 @@ $ curl http://localhost:8983/solr/airport.flightlog/select?q=id:3&wt=json
 </response>
 ```
 
-### Originating airport that had the most flights on 2012-01-23
+### SPARK-SQL example: Originating airport that had the most flights on 2012-01-23
 ```
 # dse spark-sql -e "select fl_date,origin,count(*) as sum from airport.flightlog group by fl_date, origin order by fl_date,sum;" | egrep "2012-01-23|Time" | tail -5
 The log file is at /home/centos/.spark-sql-shell.log
