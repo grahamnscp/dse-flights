@@ -1010,6 +1010,30 @@ Quick tests:
 
 (1 rows)
 
+cqlsh:airport> select count(*) from flightlog where solr_query ='fl_date:"2012-01-25T00:00:00Z"';
+
+ count
+-------
+ 33821
+
+(1 rows)
+
+cqlsh:airport> select count(*) from flightlog where solr_query ='origin:HNL';
+
+ count
+-------
+  9156
+
+(1 rows)
+cqlsh:airport> select count(*) from flightlog where solr_query ='origin:HNL AND fl_date:"2012-01-25T00:00:00Z"';
+
+ count
+-------
+   288
+
+(1 rows)
+
+
 # cqlsh -e "CREATE SEARCH INDEX ON airport.airport_codes;"
 # cqlsh -e "describe airport_codes;"
 
