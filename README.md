@@ -1206,4 +1206,5 @@ Some docs..
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingDSESpark.html
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingSparkContext.html
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/sparkRemoteCommands.html
+https://github.com/datastax/spark-cassandra-connector/tree/master/doc
 
