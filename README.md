@@ -1204,11 +1204,67 @@ scala> :quit
 
 Some docs..  
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingSparkSession.html
-```
-scala> spark.sql("UPDATE airport.flightlog SET origin='TST' WHERE origin='BOS'")
-```
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingDSESpark.html
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingSparkContext.html
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/sparkRemoteCommands.html
 https://github.com/datastax/spark-cassandra-connector/tree/master/doc
+
+```
+scala> spark.sql("select count(*) from airport.flightlog")
+scala> res0.collect().foreach(println)
+[1048576]
+
+scala> spark.sql("select count(*) from airport.flightlog where origin='BOS'")
+res15: org.apache.spark.sql.DataFrame = [count(1): bigint]
+
+scala> res15.collect().foreach(println)
+[19874]
+
+scala> spark.sql("select count(*) from airport.flightlog where origin='TST'")
+res17: org.apache.spark.sql.DataFrame = [count(1): bigint]
+
+scala> res17.collect().foreach(println)
+[0]
+
+scala> spark.sql("update airport.flightlog set origin='TST' where origin='BOS'")
+org.apache.spark.sql.catalyst.parser.ParseException:
+mismatched input 'update' expecting {'(', 'SELECT', 'FROM', 'ADD', 'DESC', 'WITH', 'VALUES', 'CREATE', 'TABLE', 'INSERT', 'DELETE', 'DESCRIBE', 'EXPLAIN', 'SHOW', 'USE', 'DROP', 'ALTER', 'MAP', 'SET', 'RESET', 'START', 'COMMIT', 'ROLLBACK', 'REDUCE', 'REFRESH', 'CLEAR', 'CACHE', 'UNCACHE', 'DFS', 'TRUNCATE', 'ANALYZE', 'LIST', 'REVOKE', 'GRANT', 'LOCK', 'UNLOCK', 'MSCK', 'EXPORT', 'IMPORT', 'LOAD'}(line 1, pos 0)
+
+== SQL ==
+update airport.flightlog set origin='TST' where origin='TST'
+^^^
+
+  at org.apache.spark.sql.catalyst.parser.ParseException.withCommand(ParseDriver.scala:241)
+  at org.apache.spark.sql.catalyst.parser.AbstractSqlParser.parse(ParseDriver.scala:117)
+  at org.apache.spark.sql.execution.SparkSqlParser.parse(SparkSqlParser.scala:48)
+  at org.apache.spark.sql.catalyst.parser.AbstractSqlParser.parsePlan(ParseDriver.scala:69)
+  at org.apache.spark.sql.SparkSession.sql(SparkSession.scala:642)
+  ... 60 elided
+
+scala> spark.sql("UPDATE airport.flightlog SET origin='TST' WHERE origin='BOS'")
+
+```
+So can't perform update via scala _search_ console.
+
+```
+$ dse spark-sql -e "select count(*) from airport.flightlog where origin='BOS'"
+The log file is at /home/centos/.spark-sql-shell.log
+19874
+Time taken: 16.435 seconds, Fetched 1 row(s)
+
+$ dse spark-sql -e "select count(*) from airport.flightlog where origin='TST'"
+The log file is at /home/centos/.spark-sql-shell.log
+0
+Time taken: 16.687 seconds, Fetched 1 row(s)
+
+$ dse spark-sql -e "update airport.flightlog set origin='TST' where origin='BOS'"
+The log file is at /home/centos/.spark-sql-shell.log
+Error in query:
+mismatched input 'update' expecting {'(', 'SELECT', 'FROM', 'ADD', 'DESC', 'WITH', 'VALUES', 'CREATE', 'TABLE', 'INSERT', 'DELETE', 'DESCRIBE', 'EXPLAIN', 'SHOW', 'USE', 'DROP', 'ALTER', 'MAP', 'SET', 'RESET', 'START', 'COMMIT', 'ROLLBACK', 'REDUCE', 'REFRESH', 'CLEAR', 'CACHE', 'UNCACHE', 'DFS', 'TRUNCATE', 'ANALYZE', 'LIST', 'REVOKE', 'GRANT', 'LOCK', 'UNLOCK', 'MSCK', 'EXPORT', 'IMPORT', 'LOAD'}(line 1, pos 0)
+
+== SQL ==
+update airport.flightlog set origin='TST' where origin='BOS'
+^^^
+```
+Hmmm :/
 
