@@ -1203,6 +1203,10 @@ scala> :quit
 ### WIP: SPARK batch update to change all airport codes from 'BOS' to 'TST'
 
 Some docs..  
+https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingSparkSession.html
+```
+scala> spark.sql("UPDATE airport.flightlog SET origin='TST' WHERE origin='BOS'")
+```
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingDSESpark.html
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/usingSparkContext.html
 https://docs.datastax.com/en/dse/6.8/dse-dev/datastax_enterprise/spark/sparkRemoteCommands.html
