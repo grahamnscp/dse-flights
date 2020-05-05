@@ -1244,7 +1244,7 @@ update airport.flightlog set origin='TST' where origin='TST'
 scala> spark.sql("UPDATE airport.flightlog SET origin='TST' WHERE origin='BOS'")
 
 ```
-So can't perform update via scala _search_ console.
+So can't perform update via scala _search_ console, what about the spark-sql console..
 
 ```
 $ dse spark-sql -e "select count(*) from airport.flightlog where origin='BOS'"
@@ -1266,5 +1266,5 @@ mismatched input 'update' expecting {'(', 'SELECT', 'FROM', 'ADD', 'DESC', 'WITH
 update airport.flightlog set origin='TST' where origin='BOS'
 ^^^
 ```
-Hmmm :/
+Hmm :/
 
